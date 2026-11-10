@@ -40,7 +40,7 @@ type ReactPerformanceMetadata = {
   environment: string,
 };
 
-function getReactMetadata(
+function createReactMetadata(
   requestId: string | void,
   kind: ReactPerformanceMetadata['kind'],
   outcome: ReactPerformanceMetadata['outcome'],
@@ -142,7 +142,7 @@ export function logComponentRender(
               trackGroup: COMPONENTS_TRACK,
               properties,
             },
-            react: getReactMetadata(
+            react: createReactMetadata(
               requestId,
               'component',
               'completed',
@@ -206,7 +206,7 @@ export function logComponentAborted(
             tooltipText: entryName + ' Aborted',
             properties,
           },
-          react: getReactMetadata(
+          react: createReactMetadata(
             requestId,
             'component',
             'aborted',
@@ -273,7 +273,7 @@ export function logComponentErrored(
             tooltipText: entryName + ' Errored',
             properties,
           },
-          react: getReactMetadata(
+          react: createReactMetadata(
             requestId,
             'component',
             'errored',
@@ -442,7 +442,7 @@ export function logComponentAwaitAborted(
               properties,
               tooltipText,
             },
-            react: getReactMetadata(
+            react: createReactMetadata(
               requestId,
               'await',
               'aborted',
@@ -506,7 +506,7 @@ export function logComponentAwaitErrored(
               properties,
               tooltipText,
             },
-            react: getReactMetadata(
+            react: createReactMetadata(
               requestId,
               'await',
               'errored',
@@ -575,7 +575,7 @@ export function logComponentAwait(
               properties,
               tooltipText,
             },
-            react: getReactMetadata(
+            react: createReactMetadata(
               requestId,
               'await',
               'completed',
