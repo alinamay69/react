@@ -808,8 +808,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'map', other: 'later'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('Set containing itself', () =>
+    it('Set containing itself', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -818,8 +817,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'set', other: 'set'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('Map containing itself', () =>
+    it('Map containing itself', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -834,8 +832,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'map', other: 'map'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('two collections containing each other', () =>
+    it('two collections containing each other', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -915,8 +912,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'stream', other: 'stream'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('Blob beside a cycle', () =>
+    it('Blob beside a cycle', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -959,6 +955,61 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
           later: {promise: 'iterator'},
         },
         roots: {entry: 'later', other: 'shared'},
+      }));
+
+    it('a synchronous iterator that yields itself', () =>
+      withFlightModules(async () => {
+        let next = 0;
+        const iterator = {
+          [Symbol.iterator]() {
+            return this;
+          },
+          next() {
+            return next++ === 0
+              ? {done: false, value: iterator}
+              : {done: true, value: undefined};
+          },
+        };
+        const model = iterator;
+        const transport = startFlightResponse({
+          ReactServerDOMServer,
+          ReactServerDOMClient,
+          WebpackMock,
+          host,
+          model,
+          packetSizes: [1, 21, 4096],
+          yieldBetweenPackets: true,
+          onError(error) {
+            throw error;
+          },
+        });
+        let result;
+        let failure;
+        transport.root.then(
+          value => (result = value),
+          error => (failure = error),
+        );
+        try {
+          await transport.finish();
+          await transport.drain(
+            () => result !== undefined || failure !== undefined,
+            () => 'the self-yielding iterator',
+          );
+          if (failure !== undefined) {
+            throw failure;
+          }
+          expect(result[Symbol.iterator]()).toBe(result);
+          expect(result.next()).toEqual({
+            done: false,
+            value: result,
+          });
+          expect(result.next()).toEqual({
+            done: true,
+            value: undefined,
+          });
+        } finally {
+          await transport.dispose();
+        }
       }));
   });
 
@@ -1353,8 +1404,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         yieldBetweenPackets: false,
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('function bound to its array', () =>
+    it('function bound to its array', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -1364,8 +1414,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'container', other: 'container'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('function bound to its Map', () =>
+    it('function bound to its Map', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -1380,8 +1429,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'container', other: 'container'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('cycle first exposed through a bound function', () =>
+    it('cycle first exposed through a bound function', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -1391,8 +1439,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'fn', other: 'fn'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('cycle first exposed through a Promise of a bound function', () =>
+    it('cycle first exposed through a Promise of a bound function', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -1403,8 +1450,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'exposure', other: 'exposure'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('cycle first exposed through a stream item with a bound function', () =>
+    it('cycle first exposed through a stream item with a bound function', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -1431,8 +1477,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         rootPromise: true,
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('a repeated Server Function bound to its loading container', () =>
+    it('a repeated Server Function bound to its loading container', () =>
       runGraph({
         nodes: {
           ready: {module: 'loaded'},
@@ -1522,8 +1567,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'stream', other: 'stream'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('props object referenced again while a prop is loading', () =>
+    it('props object referenced again while a prop is loading', () =>
       runGraph({
         nodes: {
           payload: {module: 'export-0'},
@@ -1547,8 +1591,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'element', other: 'selected'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('element reaching itself through its props', () =>
+    it('element reaching itself through its props', () =>
       runGraph({
         nodes: {
           payload: {module: 'export-0'},
@@ -1557,6 +1600,28 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
           element: {element: 'value'},
         },
         roots: {entry: 'element', other: 'data'},
+      }));
+
+    it('a shared element stays stable when a cyclic model finishes loading', () =>
+      runGraph({
+        nodes: {
+          value: {value: null},
+          ready: {module: 'loaded'},
+          shared: {array: []},
+          data: {object: {shared: 'shared'}},
+          entry: {array: ['ready', 'data']},
+          nested: {array: ['shared']},
+          map: {map: [['value', 'nested']]},
+          element: {element: ['value', 'map']},
+          holder: {object: {first: 'element', second: 'entry'}},
+          iterator: {iterator: ['holder']},
+          copy: {array: ['element']},
+          set: {set: ['iterator', 'copy']},
+        },
+        roots: {entry: 'entry', other: 'set'},
+        events: ['load element', 'load ready'],
+        packetSizes: [4, 106, 2367],
+        yieldBetweenPackets: false,
       }));
   });
   describe('Server Component output', () => {
@@ -1637,8 +1702,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         }
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('an Error that is its own cause', () =>
+    it('an Error that is its own cause', () =>
       runGraph({
         nodes: {error: {error: 'self cause', cause: 'error'}},
         roots: {entry: 'error', other: 'error'},
@@ -1660,8 +1724,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         }),
     );
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('Error whose cause is still loading', () =>
+    it('Error whose cause is still loading', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -1671,8 +1734,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'set', other: 'set'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('Error with cyclic cause', () =>
+    it('Error with cyclic cause', () =>
       runGraph({
         nodes: {
           ready: {module: 'export-0'},
@@ -1682,8 +1744,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
         roots: {entry: 'error', other: 'cell'},
       }));
 
-    // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('a cyclic Map with values that load independently', () =>
+    it('a cyclic Map with values that load independently', () =>
       runGraph({
         nodes: {
           value1: {value: 'other value'},
@@ -1784,6 +1845,25 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
           cycle: {object: {field0: 'atoms', field1: 'cycle'}},
         },
         roots: {entry: 'cycle', other: 'cycle'},
+      }));
+
+    it('a streamed Error that is its own cause', () =>
+      runGraph({
+        nodes: {
+          error: {error: 'self cause', cause: 'error'},
+          stream: {stream: ['error']},
+        },
+        roots: {entry: 'stream', other: 'stream'},
+      }));
+
+    it('a streamed object containing an Error whose cause is the object', () =>
+      runGraph({
+        nodes: {
+          error: {error: 'item cause', cause: 'item'},
+          item: {object: {error: 'error'}},
+          stream: {stream: ['item']},
+        },
+        roots: {entry: 'stream', other: 'stream'},
       }));
   });
   describe('source timing and response context', () => {
@@ -1898,8 +1978,7 @@ describe.each(['node', 'edge'])('ReactFlightReaderFuzz (%s)', host => {
     ' schedule=' +
     scheduleIndex;
 
-  // eslint-disable-next-line jest/no-disabled-tests
-  describe.skip('generated graphs', () => {
+  describe('generated graphs', () => {
     seeds.forEach(seed => {
       for (let scheduleIndex = 0; scheduleIndex < 2; scheduleIndex++) {
         readTimings.forEach(readTiming => {
