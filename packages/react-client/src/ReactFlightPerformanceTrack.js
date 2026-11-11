@@ -32,6 +32,23 @@ const supportsUserTiming =
   // $FlowFixMe[method-unbinding]
   typeof performance.measure === 'function';
 
+type ReactPerformanceMetadata = {
+  version: 1,
+  requestId: string | void,
+  kind: 'component' | 'await',
+  outcome: 'completed' | 'errored' | 'aborted',
+  environment: string,
+};
+
+function createReactMetadata(
+  requestId: string | void,
+  kind: ReactPerformanceMetadata['kind'],
+  outcome: ReactPerformanceMetadata['outcome'],
+  environment: string,
+): ReactPerformanceMetadata {
+  return {version: 1, requestId, kind, outcome, environment};
+}
+
 const IO_TRACK = 'Server Requests ⚛';
 const COMPONENTS_TRACK = 'Server Components ⚛';
 
@@ -79,6 +96,7 @@ export function logComponentRender(
   endTime: number,
   childrenEndTime: number,
   rootEnv: string,
+  requestId: string | void,
 ): void {
   if (supportsUserTiming && childrenEndTime >= 0 && trackIdx < 10) {
     const env = componentInfo.env;
@@ -124,6 +142,12 @@ export function logComponentRender(
               trackGroup: COMPONENTS_TRACK,
               properties,
             },
+            react: createReactMetadata(
+              requestId,
+              'component',
+              'completed',
+              env ?? rootEnv,
+            ),
           },
         }),
       );
@@ -148,6 +172,7 @@ export function logComponentAborted(
   endTime: number,
   childrenEndTime: number,
   rootEnv: string,
+  requestId: string | void,
 ): void {
   if (supportsUserTiming) {
     const env = componentInfo.env;
@@ -181,6 +206,12 @@ export function logComponentAborted(
             tooltipText: entryName + ' Aborted',
             properties,
           },
+          react: createReactMetadata(
+            requestId,
+            'component',
+            'aborted',
+            env ?? rootEnv,
+          ),
         },
       });
       performance.clearMeasures(measureName);
@@ -205,6 +236,7 @@ export function logComponentErrored(
   childrenEndTime: number,
   rootEnv: string,
   error: mixed,
+  requestId: string | void,
 ): void {
   if (supportsUserTiming) {
     const env = componentInfo.env;
@@ -241,6 +273,12 @@ export function logComponentErrored(
             tooltipText: entryName + ' Errored',
             properties,
           },
+          react: createReactMetadata(
+            requestId,
+            'component',
+            'errored',
+            env ?? rootEnv,
+          ),
         },
       });
       performance.clearMeasures(measureName);
@@ -378,6 +416,7 @@ export function logComponentAwaitAborted(
   startTime: number,
   endTime: number,
   rootEnv: string,
+  requestId: string | void,
 ): void {
   if (supportsUserTiming && endTime > 0) {
     const entryName =
@@ -403,6 +442,12 @@ export function logComponentAwaitAborted(
               properties,
               tooltipText,
             },
+            react: createReactMetadata(
+              requestId,
+              'await',
+              'aborted',
+              asyncInfo.env ?? rootEnv,
+            ),
           },
         }),
       );
@@ -427,6 +472,7 @@ export function logComponentAwaitErrored(
   endTime: number,
   rootEnv: string,
   error: mixed,
+  requestId: string | void,
 ): void {
   if (supportsUserTiming && endTime > 0) {
     const description = getIODescription(error);
@@ -460,6 +506,12 @@ export function logComponentAwaitErrored(
               properties,
               tooltipText,
             },
+            react: createReactMetadata(
+              requestId,
+              'await',
+              'errored',
+              asyncInfo.env ?? rootEnv,
+            ),
           },
         }),
       );
@@ -484,6 +536,7 @@ export function logComponentAwait(
   endTime: number,
   rootEnv: string,
   value: mixed,
+  requestId: string | void,
 ): void {
   if (supportsUserTiming && endTime > 0) {
     const description = getIODescription(value);
@@ -522,6 +575,12 @@ export function logComponentAwait(
               properties,
               tooltipText,
             },
+            react: createReactMetadata(
+              requestId,
+              'await',
+              'completed',
+              asyncInfo.env ?? rootEnv,
+            ),
           },
         }),
       );
